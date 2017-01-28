@@ -30,7 +30,6 @@ def main():
     logging.info( 'will run Popen with: args={args} kwargs={kwargs}'.format( ** popenDetails ) )
     subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
     signal.signal( signal.SIGTERM, killAllAndQuit )
-    signal.signal( signal.SIGINT, killAllAndQuit )
     if arguments.quitOnInput:
         raw_input()
         killAllAndQuit()
