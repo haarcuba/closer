@@ -6,7 +6,7 @@ requires = [ 'psutil' ]
 tests_require = []
 
 setup(name='closer',
-      version='0.1.3',
+      version='0.1.4',
       description=README,
       long_description=README,
       url='https://github.com/haarcuba/closer',
