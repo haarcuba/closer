@@ -8,6 +8,7 @@ class Remote( object ):
     def __init__( self, user, host, * popenArgs, ** popenKwargs ):
         self._user = user
         self._host = host
+        self._sshTarget = '{}@{}'.format( self._user, self._host )
         self._ownKwargs = {}
         self._killer = 'terminate'
         self._remotePopenDetails = dict( args = popenArgs, kwargs = popenKwargs )
@@ -31,17 +32,19 @@ class Remote( object ):
         self._closer = command
 
     def background( self, cleanup = False ):
-        sshCommand = [ 'ssh', '{}@{}'.format( self._user, self._host ), self._closer, '--quit-on-input', '--killer', self._killer, self._hexedPickle ]
+        sshCommand = [ 'ssh', self._sshTarget , self._closer, '--quit-on-input', '--killer', self._killer, self._hexedPickle ]
         self._process = subprocess.Popen( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
         logging.info( 'pid={} running {}'.format( self._process.pid, sshCommand ) )
         if cleanup:
             atexit.register( self.terminate )
 
     def foreground( self ):
-        sshCommand = [ 'ssh', '{}@{}'.format( self._user, self._host ), self._closer, '--killer', self._killer, self._hexedPickle ]
-        self._process = subprocess.Popen( sshCommand, ** self._ownKwargs )
-        logging.info( 'pid={} running {}'.format( self._process.pid, sshCommand ) )
-        return self._process.wait()
+        sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle ]
+        return subprocess.check_call( sshCommand, ** self._ownKwargs )
+
+    def output( self ):
+        sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle ]
+        return subprocess.check_output( sshCommand, ** self._ownKwargs )
 
     @property
     def process( self ):
