@@ -32,14 +32,13 @@ def main():
     killer = arguments.killer
 
     popenDetails = interpret( arguments.popenArgsKwargsInHexedPickle )
-    subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
+    subProcess = subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
     signal.signal( signal.SIGTERM, killAllAndQuit )
     if arguments.quitOnInput:
         raw_input()
         killAllAndQuit()
     else:
-        while True:
-            time.sleep( 1000 )
+        sys.exit( subProcess.wait() )
 
 if __name__ == '__main__':
     main()
