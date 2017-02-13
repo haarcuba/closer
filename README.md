@@ -22,7 +22,7 @@ You *must* install `closer` *both* on your local machine *and* the remote machin
 In this example we connect via SSH to a machien with IP `10.50.50.11` with a user called `vagrant`.
 We run a `bash` shell that itself runs a `sleep`, not before echoing `whatup` to standard output.
 
-After we quit the `IPython` process, the `Remote` object kills the remote process for us (becasue we specified `cleanup=True`.
+After we quit the [`IPython`](http://ipython.org) process, the `Remote` object kills the remote process for us (becasue we specified `cleanup=True`.
 
 ```ipython
 $ ipython
@@ -39,13 +39,13 @@ In [1]: import closer.remote
 
 In [2]: r = closer.remote.Remote( 'vagrant', '10.50.50.11', [ 'bash', '-c', 'echo whatup; sleep 1500;' ] )
 
-In [3]: r.background(cleanup=True)
+In [3]: r.background(cleanup=True) # launches remote process in the background
 
 whatup
-In [4]: quit()
+In [4]: quit()  # remote process dies automatically - check it out on your own remote server
 ```
 
-## Explicitly Closing All Remote Background Processes and Handling `SIGTERM`
+## Explicitly Closing All Remote Background (with `cleanup=True`) Processes and Handling `SIGTERM`
 
 `closer` relies on [`atexit`](https://docs.python.org/2.7/library/atexit.html)
 If your process dies as a result of receiving `SIGTERM`, the `atexit` handler will not run.
@@ -55,6 +55,10 @@ If your process dies as a result of receiving `SIGTERM`, the `atexit` handler wi
 ```python
     closer.remote.Remote.tidyUp()
 ```
+
+NOTE: `tidyUp()` will ONLY WORK for `Remote` objects that run with
+`.background(cleanup=True)`. If you did not specify `cleanup=True` it is false
+by default.
 
 To handle `SIGTERM`, e.g.:
 
@@ -69,6 +73,58 @@ def handleSIGTERM( * args ):
     sys.exit( 1 )
 
 signal.signal( signal.SIGTERM, handleSIGTERM )
+```
+
+
+## Other Perks
+
+The `Remote` class also allows you to run processes synchronously, i.e. the following [IPython](http://ipython.org) session:
+
+```python
+In [7]: r = closer.remote.Remote( 'vagrant', '10.50.50.11', [ 'ls', '-ltr', '/var' ] )
+
+In [8]: r.foreground()
+total 44
+drwxrwsr-x  2 root staff  4096 Apr 10  2014 local
+drwxr-xr-x  2 root root   4096 Apr 10  2014 backups
+drwxr-xr-x  2 root root   4096 Feb  8 20:41 opt
+drwxrwsr-x  2 root mail   4096 Feb  8 20:41 mail
+lrwxrwxrwx  1 root root      4 Feb  8 20:41 run -> /run
+lrwxrwxrwx  1 root root      9 Feb  8 20:41 lock -> /run/lock
+drwxr-xr-x  5 root root   4096 Feb  8 20:42 spool
+drwxrwxrwt  2 root root   4096 Feb  8 20:43 crash
+drwxr-xr-x 11 root root   4096 Feb  8 21:35 cache
+drwxr-xr-x 47 root root   4096 Feb  8 21:36 lib
+drwxr-xr-x  3 root root   4096 Feb 12 20:22 chef
+drwxrwxrwt  2 root root   4096 Feb 12 22:11 tmp
+drwxrwxr-x 10 root syslog 4096 Feb 13 18:49 log
+```
+
+And you can capture the output if you like:
+
+
+```python
+In [6]: r = closer.remote.Remote( 'vagrant', '10.50.50.11', [ 'ls', '-ltr', '/var' ] )
+
+In [7]: text = r.output()
+
+In [8]: text.split('\n')
+Out[8]: 
+['total 44',
+ 'drwxrwsr-x  2 root staff  4096 Apr 10  2014 local',
+ 'drwxr-xr-x  2 root root   4096 Apr 10  2014 backups',
+ 'drwxr-xr-x  2 root root   4096 Feb  8 20:41 opt',
+ 'drwxrwsr-x  2 root mail   4096 Feb  8 20:41 mail',
+ 'lrwxrwxrwx  1 root root      4 Feb  8 20:41 run -> /run',
+ 'lrwxrwxrwx  1 root root      9 Feb  8 20:41 lock -> /run/lock',
+ 'drwxr-xr-x  5 root root   4096 Feb  8 20:42 spool',
+ 'drwxrwxrwt  2 root root   4096 Feb  8 20:43 crash',
+ 'drwxr-xr-x 11 root root   4096 Feb  8 21:35 cache',
+ 'drwxr-xr-x 47 root root   4096 Feb  8 21:36 lib',
+ 'drwxr-xr-x  3 root root   4096 Feb 12 20:22 chef',
+ 'drwxrwxrwt  2 root root   4096 Feb 12 22:11 tmp',
+ 'drwxrwxr-x 10 root syslog 4096 Feb 13 18:49 log',
+ '']
 ```
 
 ## Python 3
