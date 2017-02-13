@@ -24,7 +24,7 @@ We run a `bash` shell that itself runs a `sleep`, not before echoing `whatup` to
 
 After we quit the [`IPython`](http://ipython.org) process, the `Remote` object kills the remote process for us (becasue we specified `cleanup=True`.
 
-```ipython
+```python
 $ ipython
 Python 2.7.12+ (default, Sep 17 2016, 12:08:02) 
 Type "copyright", "credits" or "license" for more information.
