@@ -1,4 +1,4 @@
-# Closer
+# CLOSER
 
 Closer was born because I had trouble with killing up processes I set up remotely via SSH.
 That is, you want to run some SSH process in the background, and then you want to kill it, just 
