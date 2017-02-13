@@ -4,6 +4,13 @@ import atexit
 import pickle
 
 class Remote( object ):
+    _cleanup = []
+
+    @classmethod
+    def tidyUp( cls, * args ):
+        for remote in cls._cleanup:
+            remote.terminate()
+
     def __init__( self, user, host, * popenArgs, ** popenKwargs ):
         self._user = user
         self._host = host
@@ -49,7 +56,7 @@ class Remote( object ):
         sshCommand = [ 'ssh', self._sshTarget , self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         self._process = subprocess.Popen( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
         if cleanup:
-            atexit.register( self.terminate )
+            Remote._cleanup.append( self )
         _, self._peer = self._socket.recvfrom( 1024 )
 
     def foreground( self ):
@@ -70,3 +77,5 @@ class Remote( object ):
         self._socket.sendto( 'quit', self._peer )
         self._socket.close()
         self._terminated = True
+
+atexit.register( Remote.tidyUp )
