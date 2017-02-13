@@ -12,6 +12,11 @@ You *must* install `closer` *both* on your local machine *and* the remote machin
 
     $ pip install closer
 
+## Caveats
+
+* Again, `closer` must be installed on the remote machine for it to work.
+* `closer` uses UDP packets for inter process communication. Firewalls make block `closer`. 
+
 ## Example Run
 
 In this example we connect via SSH to a machien with IP `10.50.50.11` with a user called `vagrant`.
