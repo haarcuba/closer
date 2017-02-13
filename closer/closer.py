@@ -1,10 +1,10 @@
 import subprocess
-import time
+import socket
 import signal
 import argparse
 import psutil
 import os
-import cPickle
+import pickle
 import sys
 
 killer = None
@@ -20,22 +20,26 @@ def killAllAndQuit( * args ):
 
 def interpret( hexedPickle ):
     pickled = hexedPickle.decode( 'hex' )
-    return cPickle.loads( pickled )
+    return pickle.loads( pickled )
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument( 'popenArgsKwargsInHexedPickle' )
+    parser.add_argument( 'detailsHexedPickle' )
     parser.add_argument( '--killer', choices = [ 'kill', 'terminate' ], default = 'terminate' )
-    parser.add_argument( '--quit-on-input', dest='quitOnInput', action='store_true' )
+    parser.add_argument( '--quit-when-told', dest='quitWhenTold', action='store_true' )
     arguments = parser.parse_args()
     global killer
     killer = arguments.killer
 
-    popenDetails = interpret( arguments.popenArgsKwargsInHexedPickle )
+    details = interpret( arguments.detailsHexedPickle )
+    popenDetails = details[ 'popenDetails' ]
     subProcess = subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
     signal.signal( signal.SIGTERM, killAllAndQuit )
-    if arguments.quitOnInput:
-        raw_input()
+    if arguments.quitWhenTold:
+        sock = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
+        sock.connect( details[ 'peer' ] )
+        sock.send( 'hi' )
+        sock.recv( 1024 )
         killAllAndQuit()
     else:
         sys.exit( subProcess.wait() )
