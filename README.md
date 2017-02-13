@@ -44,3 +44,33 @@ In [3]: r.background(cleanup=True)
 whatup
 In [4]: quit()
 ```
+
+## Explicitly Closing All Remote Background Processes and Handling `SIGTERM`
+
+`closer` relies on [`atexit`](https://docs.python.org/2.7/library/atexit.html)
+If your process dies as a result of receiving `SIGTERM`, the `atexit` handler will not run.
+
+`closer` provides a solution by allowing you to explicitly close all `Remote` processes:
+
+```python
+    closer.remote.Remote.tidyUp()
+```
+
+To handle `SIGTERM`, e.g.:
+
+
+```python
+import closer.remote
+import signal
+import sys
+
+def handleSIGTERM( * args ):
+    closer.remote.Remote.tidyUp()
+    sys.exit( 1 )
+
+signal.signal( signal.SIGTERM, handleSIGTERM )
+```
+
+## Python 3
+
+Currently `closer` does not work with Python 3.
