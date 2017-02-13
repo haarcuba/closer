@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
-README = 'a small script that runs a Popen command and closes all its child subprocesses'
+README = 'close remote SSH processes automatically'
 
 requires = [ 'psutil' ]
 tests_require = []
 
 setup(name='closer',
-      version='0.1.8',
+      version='0.1.9',
       description=README,
       long_description=README,
       url='https://github.com/haarcuba/closer',
