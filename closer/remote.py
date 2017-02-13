@@ -47,7 +47,7 @@ class Remote( object ):
 
     def background( self, cleanup = False ):
         sshCommand = [ 'ssh', self._sshTarget , self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
-        self._process = subprocess.Popen( sshCommand, ** self._ownKwargs )
+        self._process = subprocess.Popen( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
         if cleanup:
             atexit.register( self.terminate )
         _, self._peer = self._socket.recvfrom( 1024 )
