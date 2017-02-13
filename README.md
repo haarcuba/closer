@@ -6,6 +6,12 @@ like you would a local subprocess.
 
 I couldn't find a good solution, so here's my take on it.
 
+## Installation
+
+You *must* install `closer` *both* on your local machine *and* the remote machine:
+
+    $ pip install closer
+
 ## Example Run
 
 In this example we connect via SSH to a machien with IP `10.50.50.11` with a user called `vagrant`.
