@@ -6,6 +6,7 @@ import psutil
 import os
 import pickle
 import sys
+import pprint
 
 killer = None
 
@@ -27,11 +28,16 @@ def main():
     parser.add_argument( 'detailsHexedPickle' )
     parser.add_argument( '--killer', choices = [ 'kill', 'terminate' ], default = 'terminate' )
     parser.add_argument( '--quit-when-told', dest='quitWhenTold', action='store_true' )
+    parser.add_argument( '--interpret', action='store_true' )
     arguments = parser.parse_args()
     global killer
     killer = arguments.killer
 
     details = interpret( arguments.detailsHexedPickle )
+    if arguments.interpret:
+        pprint.pprint( details )
+        return
+
     popenDetails = details[ 'popenDetails' ]
     subProcess = subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
     signal.signal( signal.SIGTERM, killAllAndQuit )
