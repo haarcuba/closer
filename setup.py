@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-README = 'a small script that runs a Popen command and closes all its child subprocesses'
+README = 'close remote SSH processes automatically'
 
 requires = [ 'psutil' ]
 tests_require = []
