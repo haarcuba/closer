@@ -59,9 +59,12 @@ class Remote( object ):
             Remote._cleanup.append( self )
         _, self._peer = self._socket.recvfrom( 1024 )
 
-    def foreground( self ):
+    def foreground( self, check = True ):
         sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
-        return subprocess.check_call( sshCommand, ** self._ownKwargs )
+        if check:
+            return subprocess.check_call( sshCommand, ** self._ownKwargs )
+        else:
+            return subprocess.call( sshCommand, ** self._ownKwargs )
 
     def output( self ):
         sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
