@@ -3,6 +3,13 @@ import socket
 import atexit
 import pickle
 
+class RemoteProcessError( Exception ):
+    def __init__( self, popenDetails, causedBy ):
+        self.popenDetails = popenDetails
+        self.exitCode = causedBy.returncode
+        self.causedBy = causedBy
+        Exception.__init__( self, 'remote process finished with exit code {}: popenDetails={}'.format( self.exitCode, popenDetails ) )
+
 class Remote( object ):
     _cleanup = []
 
@@ -61,11 +68,17 @@ class Remote( object ):
 
     def foreground( self ):
         sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
-        return subprocess.check_call( sshCommand, ** self._ownKwargs )
+        try:
+            return subprocess.check_call( sshCommand, ** self._ownKwargs )
+        except subprocess.CalledProcessError as e:
+            raise RemoteProcessError( self._remotePopenDetails, e )
 
     def output( self ):
         sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
-        return subprocess.check_output( sshCommand, ** self._ownKwargs )
+        try:
+            return subprocess.check_output( sshCommand, ** self._ownKwargs )
+        except subprocess.CalledProcessError as e:
+            raise RemoteProcessError( self._remotePopenDetails, e )
 
     @property
     def process( self ):
