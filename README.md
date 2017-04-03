@@ -127,6 +127,8 @@ Out[8]:
  '']
 ```
 
+By default `.foreground()` will raise an exception if the process fails. You can disable this behaviour with `.foreground( check = False )`.
+
 ## Python 3
 
 Currently `closer` does not work with Python 3.
