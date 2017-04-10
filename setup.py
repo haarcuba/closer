@@ -3,7 +3,9 @@ from setuptools import setup, find_packages
 README = 'close remote SSH processes automatically'
 
 requires = [ 'psutil' ]
-tests_require = []
+tests_require = [
+        'pytest',
+        ]
 
 setup(name='closer',
       version='1.0.1',
