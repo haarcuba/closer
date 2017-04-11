@@ -1,4 +1,5 @@
 import subprocess
+import threading
 import socket
 import signal
 import argparse
@@ -9,21 +10,30 @@ import sys
 import pprint
 
 killer = None
+killedByUser = False
 
-def killAllAndQuit( * args ):
+def killAll( * args ):
     global killer
     me = psutil.Process( os.getpid() )
     for process in me.children( recursive = True ):
         killMethod = getattr( process, killer )
         killMethod()
 
-    quit()
+def quitWhenToldServer( peer ):
+    global killedByUser
+    sock = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
+    sock.connect( peer )
+    sock.send( 'hi' )
+    sock.recv( 1024 )
+    killedByUser = True
+    killAll()
 
 def interpret( hexedPickle ):
     pickled = hexedPickle.decode( 'hex' )
     return pickle.loads( pickled )
 
 def main():
+    global killedByUser
     parser = argparse.ArgumentParser()
     parser.add_argument( 'detailsHexedPickle' )
     parser.add_argument( '--killer', choices = [ 'kill', 'terminate' ], default = 'terminate' )
@@ -40,15 +50,18 @@ def main():
 
     popenDetails = details[ 'popenDetails' ]
     subProcess = subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
-    signal.signal( signal.SIGTERM, killAllAndQuit )
+    signal.signal( signal.SIGTERM, killAll )
     if arguments.quitWhenTold:
-        sock = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
-        sock.connect( details[ 'peer' ] )
-        sock.send( 'hi' )
-        sock.recv( 1024 )
-        killAllAndQuit()
+        thread = threading.Thread( target = quitWhenToldServer, args = ( details[ 'peer' ], ) )
+        thread.daemon = True
+        thread.start()
+        exitCode = subProcess.wait()
+        if killedByUser:
+            thread.join()
+        sys.exit( exitCode )
     else:
-        sys.exit( subProcess.wait() )
+        exitCode = subProcess.wait()
+        sys.exit( exitCode )
 
 if __name__ == '__main__':
     main()

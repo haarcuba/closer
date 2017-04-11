@@ -2,7 +2,8 @@ from setuptools import setup, find_packages
 
 README = 'close remote SSH processes automatically'
 
-requires = [ 'psutil' ]
+requires = [ 'psutil',
+             'pimped_subprocess', ]
 tests_require = [
         'pytest',
         ]

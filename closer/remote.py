@@ -2,6 +2,7 @@ import subprocess
 import socket
 import atexit
 import pickle
+import pimped_subprocess
 
 class RemoteProcessError( Exception ):
     def __init__( self, popenDetails, causedBy ):
@@ -82,6 +83,17 @@ class Remote( object ):
             return subprocess.check_output( sshCommand, ** self._ownKwargs )
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
+
+    def liveMonitor( self, onOutput, onProcessEnd = None, cleanup = False ):
+        sshCommand = [ 'ssh', self._sshTarget , self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
+        self._process = pimped_subprocess.PimpedSubprocess( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
+        self._process.onOutput( onOutput )
+        if onProcessEnd is not None:
+            self._process.onProcessEnd( onProcessEnd )
+        self._process.launch()
+        if cleanup:
+            Remote._cleanup.append( self )
+        _, self._peer = self._socket.recvfrom( 1024 )
 
     @property
     def process( self ):
