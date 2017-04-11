@@ -3,13 +3,13 @@ from setuptools import setup, find_packages
 README = 'close remote SSH processes automatically'
 
 requires = [ 'psutil',
-             'pimped_subprocess', ]
+             'pimped_subprocess>=1.0.0', ]
 tests_require = [
         'pytest',
         ]
 
 setup(name='closer',
-      version='1.0.1',
+      version='1.1.0',
       description=README,
       long_description=README,
       url='https://github.com/haarcuba/closer',
