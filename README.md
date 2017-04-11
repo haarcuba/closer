@@ -129,6 +129,27 @@ Out[8]:
 
 By default `.foreground()` will raise an exception if the process fails. You can disable this behaviour with `.foreground( check = False )`.
 
+## Live Monitoring of Remote Process Output and Death
+
+You can monitor a remote processes' output and death events using the `liveMonitor` method. Try this:
+
+```python
+def onOutput( line ):
+    print "got: {}".format( line )
+
+def onProcessEnd( exitCode ):
+    print "process died with exitCode={}".format( exitCode )
+
+tested = closer.remote.Remote( 'my-user', 'my-host', "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo $i; sleep 1; done; exit 7'", shell = True )
+tested.liveMonitor( onOutput = onOutput, onProcessEnd = onProcessEnd, cleanup = True )
+LET_PROCESS_DIE_NATURALLY = 12
+time.sleep( LET_PROCESS_DIE_NATURALLY )
+```
+
+the `onOutput` callback will be called for every line the remote process
+produces on its standard output, and the `onProcessEnd` will be called when the
+remote process exits.
+
 ## Python 3
 
 Currently `closer` does not work with Python 3.
