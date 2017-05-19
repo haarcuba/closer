@@ -1,6 +1,5 @@
 import subprocess
 import threading
-import socket
 import signal
 import argparse
 import psutil
@@ -8,7 +7,7 @@ import os
 import pickle
 import sys
 import pprint
-
+import flask
 killer = None
 killedByUser = False
 
@@ -19,14 +18,18 @@ def killAll( * args ):
         killMethod = getattr( process, killer )
         killMethod()
 
-def quitWhenToldServer( peer ):
-    global killedByUser
-    sock = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
-    sock.connect( peer )
-    sock.send( 'hi' )
-    sock.recv( 1024 )
-    killedByUser = True
-    killAll()
+def quitWhenToldServer( port ):
+    webApp = flask.Flask( 'closer' )
+
+    @webApp.route("/kill")
+    def kill():
+        global killedByUser
+        killedByUser = True
+        killAll()
+        shutdownFlask = flask.request.environ.get('werkzeug.server.shutdown')
+        shutdownFlask()
+
+    webApp.run( host = '0.0.0.0', port = port )
 
 def interpret( hexedPickle ):
     pickled = hexedPickle.decode( 'hex' )
@@ -52,7 +55,7 @@ def main():
     subProcess = subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
     signal.signal( signal.SIGTERM, killAll )
     if arguments.quitWhenTold:
-        thread = threading.Thread( target = quitWhenToldServer, args = ( details[ 'peer' ], ) )
+        thread = threading.Thread( target = quitWhenToldServer, args = ( details[ 'port' ], ) )
         thread.daemon = True
         thread.start()
         exitCode = subProcess.wait()

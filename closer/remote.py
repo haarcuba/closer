@@ -1,8 +1,11 @@
 import subprocess
-import socket
+import random
+import requests
 import atexit
 import pickle
 import pimped_subprocess
+
+PORT_RANGE = 64000, 65500
 
 class RemoteProcessError( Exception ):
     def __init__( self, popenDetails, causedBy ):
@@ -22,28 +25,18 @@ class Remote( object ):
     def __init__( self, user, host, * popenArgs, ** popenKwargs ):
         self._user = user
         self._host = host
+        random.seed()
+        self._port = random.randint( * PORT_RANGE )
         self._sshTarget = '{}@{}'.format( self._user, self._host )
         self._ownKwargs = {}
         self._killer = 'terminate'
         self._remotePopenDetails = dict( args = popenArgs, kwargs = popenKwargs )
         self._terminated = False
         self._closer = 'closer'
-        self._findSourceIP()
-        self._socket = socket.socket( socket.AF_INET,socket.SOCK_DGRAM )
-        self._socket.bind( ( '', 0 ) )
 
     def _hexedPickle( self ):
-        details = dict( popenDetails = self._remotePopenDetails, peer = ( self._sourceIP, self._port() ) )
+        details = dict( popenDetails = self._remotePopenDetails, port = self._port )
         return pickle.dumps( details ).encode( 'hex' )
-
-    def _port( self ):
-        return self._socket.getsockname()[ 1 ]
-
-    def _findSourceIP( self ):
-        sock = socket.socket( socket.AF_INET,socket.SOCK_DGRAM )
-        sock.connect( ( self._host, 2222 ) )
-        self._sourceIP = sock.getsockname()[ 0 ]
-        sock.close()
 
     def localProcessKwargs( self, ** kwargs ):
         self._ownKwargs = kwargs
@@ -65,7 +58,6 @@ class Remote( object ):
         self._process = subprocess.Popen( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
         if cleanup:
             Remote._cleanup.append( self )
-        _, self._peer = self._socket.recvfrom( 1024 )
 
     def foreground( self, check = True ):
         sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
@@ -93,7 +85,6 @@ class Remote( object ):
         self._process.launch()
         if cleanup:
             Remote._cleanup.append( self )
-        _, self._peer = self._socket.recvfrom( 1024 )
 
     @property
     def process( self ):
@@ -102,8 +93,9 @@ class Remote( object ):
     def terminate( self ):
         if self._terminated:
             return
-        self._socket.sendto( 'quit', self._peer )
-        self._socket.close()
+        url = 'http://{}:{}/kill'.format( self._host, self._port )
+        response = requests.get( url )
+        print response, "XXX"
         self._terminated = True
 
 atexit.register( Remote.tidyUp )

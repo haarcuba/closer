@@ -33,14 +33,14 @@ class TestRealLiveProcesses( object ):
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )
         tested.background( cleanup = False )
         assert self.processAlive( 'closer' )
-        assert self.processAlive( 'tag={}'.format( tag ) )
+        assert self.processAlive( 'tag={}'.format( tag ), slack = 0 )
         tested.terminate()
-        assert not self.processAlive( 'tag={}'.format( tag ) )
+        assert not self.processAlive( 'tag={}'.format( tag ), slack = 0 )
         assert not self.processAlive( 'closer' )
 
     def test_closer_process_dies_if_remote_subprocess_dies( self ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 1; echo tag={}'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 3; echo tag={}'".format( tag ), shell = True )
         tested.background( cleanup = False )
         assert self.processAlive( 'closer' )
         assert self.processAlive( 'tag={}'.format( tag ) )
@@ -102,7 +102,8 @@ class TestRealLiveProcesses( object ):
         assert monitor.exitCode is None
         assert not monitor.deathNotification
 
-    def processAlive( self, searchString ):
+    def processAlive( self, searchString, slack = 1 ):
+        time.sleep( slack )
         searchString = str( searchString )
         exitCode = subprocess.call( "ssh {}@{} pgrep -fl '{}'".format( USER, IP, searchString ), shell = True )
         return exitCode == 0
