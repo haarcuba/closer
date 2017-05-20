@@ -15,7 +15,7 @@ You *must* install `closer` *both* on your local machine *and* the remote machin
 ## Caveats
 
 * Again, `closer` must be installed on the remote machine for it to work.
-* `closer` uses UDP packets for inter process communication. Firewalls make block `closer`. 
+* `closer` uses TCP communication with the remote process. Firewalls may block `closer`. 
 
 ## Example Run
 
