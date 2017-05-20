@@ -95,7 +95,6 @@ class Remote( object ):
             return
         url = 'http://{}:{}/kill'.format( self._host, self._port )
         response = requests.get( url )
-        print response, "XXX"
         self._terminated = True
 
 atexit.register( Remote.tidyUp )

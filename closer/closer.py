@@ -8,6 +8,7 @@ import pickle
 import sys
 import pprint
 import flask
+import logging
 killer = None
 killedByUser = False
 
@@ -28,7 +29,12 @@ def quitWhenToldServer( port ):
         killAll()
         shutdownFlask = flask.request.environ.get('werkzeug.server.shutdown')
         shutdownFlask()
+        return 'bye'
 
+    IMPOSSIBLE_LEVEL = 500
+    log = logging.getLogger('werkzeug')
+    log.setLevel( IMPOSSIBLE_LEVEL )
+    webApp.logger.setLevel( IMPOSSIBLE_LEVEL )
     webApp.run( host = '0.0.0.0', port = port )
 
 def interpret( hexedPickle ):
