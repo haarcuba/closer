@@ -53,6 +53,7 @@ class TestRealLiveProcesses( object ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
         monitor = Monitor()
+        assert not monitor.deathNotification
         tested.liveMonitor( onOutput = monitor.onOutput, onProcessEnd = monitor.onDeath, cleanup = True )
         assert self.processAlive( 'closer' )
         assert self.processAlive( tag )
@@ -62,12 +63,14 @@ class TestRealLiveProcesses( object ):
         assert not self.processAlive( 'closer' )
         assert monitor.output == [ '{}_{}'.format( tag, i ) for i in ( 1, 2, 3, 4, 5 ) ]
         assert monitor.exitCode == 0
+        assert monitor.deathNotification
 
     def test_live_monitoring_and_deliberate_killing_of_remote_process( self ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
         monitor = Monitor()
         tested.liveMonitor( onOutput = monitor.onOutput, onProcessEnd = monitor.onDeath, cleanup = True )
+        assert not monitor.deathNotification
         assert self.processAlive( 'closer' )
         assert self.processAlive( tag )
         LET_PROCESS_LIVE_A_LITTLE = 3
@@ -81,12 +84,14 @@ class TestRealLiveProcesses( object ):
         for index, line in enumerate( monitor.output ):
             assert line == '{}_{}'.format( tag, index + 1 )
         assert monitor.exitCode != 0
+        assert monitor.deathNotification
 
     def test_live_monitoring_only_output( self ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
         monitor = Monitor()
         tested.liveMonitor( onOutput = monitor.onOutput, cleanup = True )
+        assert not monitor.deathNotification
         assert self.processAlive( 'closer' )
         assert self.processAlive( tag )
         LET_PROCESS_LIVE_A_LITTLE = 3
