@@ -38,6 +38,22 @@ class TestRealLiveProcesses( object ):
         assert not self.processAlive( 'tag={}'.format( tag ), slack = 0 )
         assert not self.processAlive( 'closer' )
 
+    def test_many_closer_processes_in_parallel( self ):
+        tags = [ str( random.random() ) for _ in range( 10 ) ]
+        remotes = {}
+        for tag in tags:
+            remote = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )
+            remote.background( cleanup = False )
+            remotes[ tag ] = remote
+            assert self.processAlive( 'tag={}'.format( tag ) )
+
+        for tag in tags:
+            remote = remotes[ tag ]
+            remote.terminate()
+            assert not self.processAlive( 'tag={}'.format( tag ) )
+
+        assert not self.processAlive( 'closer' )
+
     def test_closer_process_dies_if_remote_subprocess_dies( self ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 3; echo tag={}'".format( tag ), shell = True )
