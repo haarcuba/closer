@@ -1,4 +1,5 @@
 import subprocess
+import logging
 import random
 import requests
 import atexit
@@ -20,7 +21,10 @@ class Remote( object ):
     @classmethod
     def tidyUp( cls, * args ):
         for remote in cls._cleanup:
-            remote.terminate()
+            try:
+                remote.terminate()
+            except requests.exceptions.RequestException:
+                logging.exception( 'while killing remote process with {}'.format( str( remote ) ) )
 
     def __init__( self, user, host, * popenArgs, ** popenKwargs ):
         self._user = user
@@ -33,6 +37,9 @@ class Remote( object ):
         self._remotePopenDetails = dict( args = popenArgs, kwargs = popenKwargs )
         self._terminated = False
         self._closer = 'closer'
+
+    def __repr__( self ):
+        return str( self._remotePopenDetails )
 
     def _hexedPickle( self ):
         details = dict( popenDetails = self._remotePopenDetails, port = self._port )
@@ -94,7 +101,7 @@ class Remote( object ):
         if self._terminated:
             return
         url = 'http://{}:{}/kill'.format( self._host, self._port )
-        response = requests.get( url )
+        requests.get( url )
         self._terminated = True
 
 atexit.register( Remote.tidyUp )
