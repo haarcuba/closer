@@ -34,6 +34,12 @@ class TestRealLiveProcesses( object ):
         exitCode = tested.foreground( check = False )
         assert exitCode == 77
 
+        tag = str( random.random() )
+        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{}'".format( tag, tag, tag ), shell = True )
+        tested.setCloserCommand( closerCommand )
+        output = tested.output()
+        assert output.decode( 'ascii' ) == '{}-{}-{}'.format( tag, tag, tag )
+
     def test_remote_subprocess_dies_when_closer_told_to_quit( self, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )
