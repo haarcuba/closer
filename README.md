@@ -75,6 +75,14 @@ def handleSIGTERM( * args ):
 signal.signal( signal.SIGTERM, handleSIGTERM )
 ```
 
+## My Remote Machine's `closer` Script is Not in the System PATH
+
+use the `.setCloserCommand()`, e.g.
+
+```python
+remoteObject = closer.remote.Remote( ... )
+remoteObject.setCloserCommand( '/path/to/closer' )
+```
 
 ## Other Perks
 
@@ -152,4 +160,14 @@ remote process exits.
 
 ## Python 3
 
-Currently `closer` does not work with Python 3.
+`closer` works with Python 3 just fine, but there is a caveat. Assuming that the local host has the Python 3 `closer` installed:
+
+* if the remote host has a Python 3 based closer - no problem
+* if the remote hsot has a Python 2 based closer, you must set the closer command like so:
+
+
+```python
+remoteObject.setCloserCommand( '/path/to/closer' ) 
+```
+    
+otherwise, it will look for a local `closer3` script and will not find one.
