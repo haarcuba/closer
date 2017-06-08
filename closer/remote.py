@@ -1,4 +1,5 @@
 import subprocess
+import codecs
 import logging
 import random
 import requests
@@ -36,14 +37,15 @@ class Remote( object ):
         self._killer = 'terminate'
         self._remotePopenDetails = dict( args = popenArgs, kwargs = popenKwargs )
         self._terminated = False
-        self._closer = 'closer'
+        self._closer = 'closer3'
 
     def __repr__( self ):
         return str( self._remotePopenDetails )
 
     def _hexedPickle( self ):
         details = dict( popenDetails = self._remotePopenDetails, port = self._port )
-        return pickle.dumps( details ).encode( 'hex' )
+        pickled = pickle.dumps( details, protocol = 2 )
+        return codecs.encode( pickled, 'hex' )
 
     def localProcessKwargs( self, ** kwargs ):
         self._ownKwargs = kwargs

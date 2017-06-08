@@ -1,4 +1,5 @@
 import subprocess
+import codecs
 import threading
 import signal
 import argparse
@@ -38,7 +39,7 @@ def quitWhenToldServer( port ):
     webApp.run( host = '0.0.0.0', port = port )
 
 def interpret( hexedPickle ):
-    pickled = hexedPickle.decode( 'hex' )
+    pickled = codecs.decode( hexedPickle, 'hex' )
     return pickle.loads( pickled )
 
 def main():

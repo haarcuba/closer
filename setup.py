@@ -28,8 +28,7 @@ setup(name='closer',
           'testing': tests_require,
       },
       install_requires=requires,
-      entry_points="""\
-      [console_scripts]
-      closer = closer.closer:main
-      """,
+      entry_points={
+          'console_scripts': [ 'closer3 = closer.closer3:main' ]
+      },
       )
