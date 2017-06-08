@@ -163,7 +163,7 @@ remote process exits.
 `closer` works with Python 3 just fine, but there is a caveat. Assuming that the local host has the Python 3 `closer` installed:
 
 * if the remote host has a Python 3 based closer - no problem
-* if the remote hsot has a Python 2 based closer, you must set the closer command like so:
+* if the remote host has a Python 2 based closer, you must set the closer command like so:
 
 
 ```python
