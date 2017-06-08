@@ -11,7 +11,7 @@ tests_require = [
         ]
 
 setup(name='closer',
-      version='2.2.0',
+      version='2.3.0',
       description=README,
       long_description=README,
       url='https://github.com/haarcuba/closer',
