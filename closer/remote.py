@@ -78,10 +78,12 @@ class Remote( object ):
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
 
-    def output( self ):
+    def output( self, universalNewlines = True ):
         sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
+        kwargs = dict( self._ownKwargs )
+        kwargs[ 'universal_newlines' ] = universalNewlines
         try:
-            return subprocess.check_output( sshCommand, ** self._ownKwargs )
+            return subprocess.check_output( sshCommand, ** kwargs )
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
 

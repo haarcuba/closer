@@ -38,7 +38,12 @@ class TestRealLiveProcesses( object ):
         tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{}'".format( tag, tag, tag ), shell = True )
         tested.setCloserCommand( closerCommand )
         output = tested.output()
-        assert output.decode( 'ascii' ) == '{}-{}-{}'.format( tag, tag, tag )
+        assert output == '{}-{}-{}'.format( tag, tag, tag )
+
+        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{}'".format( tag, tag, tag ), shell = True )
+        tested.setCloserCommand( closerCommand )
+        output = tested.output( universalNewlines = False )
+        assert output == bytes( '{}-{}-{}'.format( tag, tag, tag ), 'ascii' )
 
     def test_remote_subprocess_dies_when_closer_told_to_quit( self, closerCommand ):
         tag = str( random.random() )
