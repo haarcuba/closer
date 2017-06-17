@@ -86,7 +86,7 @@ class TestRealLiveProcesses( object ):
 
         assert not self.processAlive( 'closer' )
 
-    def test_closer_process_dies_if_remote_subprocess_dies( self, dockerContainer, closerCommand ):
+    def test_closer_process_dies_if_remote_subprocess_dies_does_not_raise_if_terminated_after_death( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 3; echo tag={}'".format( tag ), shell = True )
         self.augment( tested, closerCommand )
@@ -97,6 +97,7 @@ class TestRealLiveProcesses( object ):
         time.sleep( LET_PROCESS_DIE_NATURALLY )
         assert not self.processAlive( 'tag={}'.format( tag ) )
         assert not self.processAlive( 'closer' )
+        tested.terminate()
 
     def test_live_monitoring_of_remote_process( self, dockerContainer, closerCommand ):
         tag = str( random.random() )

@@ -22,10 +22,7 @@ class Remote( object ):
     @classmethod
     def tidyUp( cls, * args ):
         for remote in cls._cleanup:
-            try:
-                remote.terminate()
-            except requests.exceptions.RequestException:
-                logging.exception( 'while killing remote process with {}'.format( str( remote ) ) )
+            remote.terminate()
 
     def __init__( self, user, host, * popenArgs, ** popenKwargs ):
         self._user = user
@@ -119,11 +116,14 @@ class Remote( object ):
         return self._process
 
     def terminate( self ):
-        logging.info( 'terminating {}'.format( self ) )
-        if self._terminated:
-            return
-        url = 'http://{}:{}/kill'.format( self._host, self._port )
-        requests.get( url )
-        self._terminated = True
+        try:
+            logging.info( 'terminating {}'.format( self ) )
+            if self._terminated:
+                return
+            url = 'http://{}:{}/kill'.format( self._host, self._port )
+            requests.get( url )
+            self._terminated = True
+        except requests.exceptions.RequestException as e:
+            logging.error( 'exception {} happened while killing {}. This may not be a problem if the process already died on the remote side'.format( e, self ) )
 
 atexit.register( Remote.tidyUp )
