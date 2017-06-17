@@ -6,6 +6,14 @@ like you would a local subprocess.
 
 I couldn't find a good solution, so here's my take on it.
 
+Closer has evolved to do more than just automatic remote process cleanup.
+Here are the main features:
+
+* kill the remote process (either by choice, or automatically at the end of the calling process)
+* capture the remote process's output
+* live monitoring of remote process output
+* get a callback upon remote process' death
+
 ## Installation
 
 You *must* install `closer` *both* on your local machine *and* the remote machine:
