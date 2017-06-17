@@ -84,6 +84,15 @@ remoteObject = closer.remote.Remote( ... )
 remoteObject.setCloserCommand( '/path/to/closer' )
 ```
 
+## I want to specify a different SSH port or other options
+
+here you go:
+
+```python
+remoteObject.sshPort = SOME_OTHER_PORT
+remoteObject.sshOptions( 'StrictHostKeyChecking=no' ) # this goes into the -o ssh flag
+```
+
 ## Other Perks
 
 The `Remote` class also allows you to run processes synchronously, i.e. the following [IPython](http://ipython.org) session:
@@ -171,3 +180,5 @@ remoteObject.setCloserCommand( '/path/to/closer' )
 ```
     
 otherwise, it will look for a local `closer3` script and will not find one.
+
+**PYTHON 2 SUPPORT WILL BE DROPPED EVENTUALLY**
