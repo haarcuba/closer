@@ -102,6 +102,7 @@ class Remote( object ):
         return self._process
 
     def terminate( self ):
+        logging.info( 'terminating {}'.format( self ) )
         if self._terminated:
             return
         url = 'http://{}:{}/kill'.format( self._host, self._port )

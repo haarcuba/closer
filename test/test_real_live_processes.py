@@ -21,14 +21,18 @@ class Monitor( object ):
         self.output.append( line )
 
 class TestRealLiveProcesses( object ):
-    def setup( self ):
-        subprocess.call( "ssh {}@{} pkill -f closer".format( USER, IP ), shell = True )
-
     @pytest.fixture( params = ( 'closer', 'closer3' ) )
     def closerCommand( self, request ):
         return request.param
 
-    def test_sanity( self, closerCommand ):
+    @pytest.fixture( scope = 'session' )
+    def dockerContainer( self ):
+        docker = subprocess.run( [ 'docker', 'run', '-d', 'haarcuba/for_closer', '22' ], stdout = subprocess.PIPE, universal_newlines = True, check = True )
+        container = docker.stdout.strip()
+        yield container
+        subprocess.run( [ 'docker', 'rm', '-f', container ] )
+
+    def test_sanity( self, dockerContainer, closerCommand ):
         tested = closer.remote.Remote( USER, IP, "bash -c 'exit 77'", shell = True )
         tested.setCloserCommand( closerCommand )
         exitCode = tested.foreground( check = False )
@@ -45,7 +49,7 @@ class TestRealLiveProcesses( object ):
         output = tested.output( universalNewlines = False )
         assert output == bytes( '{}-{}-{}'.format( tag, tag, tag ), 'ascii' )
 
-    def test_remote_subprocess_dies_when_closer_told_to_quit( self, closerCommand ):
+    def test_remote_subprocess_dies_when_closer_told_to_quit( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )
         tested.setCloserCommand( closerCommand )
@@ -56,7 +60,7 @@ class TestRealLiveProcesses( object ):
         assert not self.processAlive( 'tag={}'.format( tag ), slack = 0 )
         assert not self.processAlive( 'closer' )
 
-    def test_many_closer_processes_in_parallel( self, closerCommand ):
+    def test_many_closer_processes_in_parallel( self, dockerContainer, closerCommand ):
         tags = [ str( random.random() ) for _ in range( 10 ) ]
         remotes = {}
         for tag in tags:
@@ -73,7 +77,7 @@ class TestRealLiveProcesses( object ):
 
         assert not self.processAlive( 'closer' )
 
-    def test_closer_process_dies_if_remote_subprocess_dies( self, closerCommand ):
+    def test_closer_process_dies_if_remote_subprocess_dies( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 3; echo tag={}'".format( tag ), shell = True )
         tested.setCloserCommand( closerCommand )
@@ -85,7 +89,7 @@ class TestRealLiveProcesses( object ):
         assert not self.processAlive( 'tag={}'.format( tag ) )
         assert not self.processAlive( 'closer' )
 
-    def test_live_monitoring_of_remote_process( self, closerCommand ):
+    def test_live_monitoring_of_remote_process( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
         tested.setCloserCommand( closerCommand )
@@ -102,7 +106,7 @@ class TestRealLiveProcesses( object ):
         assert monitor.exitCode == 0
         assert monitor.deathNotification
 
-    def test_live_monitoring_and_deliberate_killing_of_remote_process( self, closerCommand ):
+    def test_live_monitoring_and_deliberate_killing_of_remote_process( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
         tested.setCloserCommand( closerCommand )
@@ -124,7 +128,7 @@ class TestRealLiveProcesses( object ):
         assert monitor.exitCode != 0
         assert monitor.deathNotification
 
-    def test_live_monitoring_only_output( self, closerCommand ):
+    def test_live_monitoring_only_output( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
         tested.setCloserCommand( closerCommand )
