@@ -52,10 +52,10 @@ class TestRealLiveProcesses( object ):
         output = tested.output()
         assert output == '{}-{}-{}'.format( tag, tag, tag )
 
-        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{}'".format( tag, tag, tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, 'head -1 /etc/hosts' , shell = True )
         self.augment( tested, closerCommand )
-        output = tested.output( universalNewlines = False )
-        assert output == bytes( '{}-{}-{}'.format( tag, tag, tag ), 'ascii' )
+        output = tested.output( binary = True )
+        assert b'localhost' in output
 
     def test_remote_subprocess_dies_when_closer_told_to_quit( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
