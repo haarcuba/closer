@@ -70,7 +70,7 @@ class Remote( object ):
         self._killer = killer
 
     def _baseCommand( self ):
-        logging.info( 'closer launching remote subprocess: {}'.format( self ) )
+        logging.debug( 'closer launching remote subprocess: {}'.format( self ) )
         return [ 'ssh', '-o', self._sshOptions, '-p', str( self._sshPort ), self._sshTarget , self._closer, ]
 
     def setCloserCommand( self, command ):
