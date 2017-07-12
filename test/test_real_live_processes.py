@@ -57,6 +57,24 @@ class TestRealLiveProcesses( object ):
         output = tested.output( binary = True )
         assert b'localhost' in output
 
+    def test_capture_output_and_also_return_code( self, dockerContainer, closerCommand ):
+        tag = str( random.random() )
+        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{} ; exit 88'".format( tag, tag, tag ), shell = True )
+        self.augment( tested, closerCommand )
+        output = tested.output( check = False )
+        assert output == '{}-{}-{}'.format( tag, tag, tag )
+        assert tested.process.returncode == 88
+
+    def test_capture_output_raises_on_error_by_default( self, dockerContainer, closerCommand ):
+        try:
+            tested = closer.remote.Remote( USER, IP, "bash -c 'exit 99'", shell = True )
+            self.augment( tested, closerCommand )
+            tested.output()
+        except closer.remote.RemoteProcessError as e:
+            assert e.causedBy.returncode == 99
+        else:
+            pytest.fail( 'expected process failure to raise RemoteProcessError, but it did not' )
+
     def test_remote_subprocess_dies_when_closer_told_to_quit( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
         tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )

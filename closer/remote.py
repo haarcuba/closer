@@ -92,12 +92,15 @@ class Remote( object ):
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
 
-    def output( self, binary = False ):
+    def output( self, binary = False, check = True ):
         sshCommand = self._baseCommand() + [ '--killer', self._killer, self._hexedPickle() ]
         kwargs = dict( self._ownKwargs )
         kwargs[ 'universal_newlines' ] = not binary
+        kwargs[ 'check' ] = check
+        kwargs[ 'stdout' ] = subprocess.PIPE
         try:
-            return subprocess.check_output( sshCommand, ** kwargs )
+            self._process = subprocess.run( sshCommand, ** kwargs )
+            return self._process.stdout
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
 
