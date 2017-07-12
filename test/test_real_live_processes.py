@@ -65,6 +65,15 @@ class TestRealLiveProcesses( object ):
         assert output == '{}-{}-{}'.format( tag, tag, tag )
         assert tested.process.returncode == 88
 
+    def test_capture_output_and_error_and_exit_code( self, dockerContainer, closerCommand ):
+        tag = str( random.random() )
+        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {tag}-{tag}-{tag} ; echo -n {tag}_error > /dev/stderr ; exit 11'".format( tag = tag ), shell = True )
+        self.augment( tested, closerCommand )
+        tested.run( check = False, stdout = subprocess.PIPE, stderr = subprocess.PIPE )
+        assert tested.process.stdout == '{}-{}-{}'.format( tag, tag, tag )
+        assert tested.process.stderr == '{}_error'.format( tag )
+        assert tested.process.returncode == 11
+
     def test_capture_output_raises_on_error_by_default( self, dockerContainer, closerCommand ):
         try:
             tested = closer.remote.Remote( USER, IP, "bash -c 'exit 99'", shell = True )

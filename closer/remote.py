@@ -93,10 +93,10 @@ class Remote( object ):
             raise RemoteProcessError( self._remotePopenDetails, e )
 
     def output( self, binary = False, check = True ):
-        self._run( binary = binary, check = check, stdout = subprocess.PIPE )
+        self.run( binary = binary, check = check, stdout = subprocess.PIPE )
         return self._process.stdout
 
-    def _run( self, binary = False, ** kwargsForRun ):
+    def run( self, binary = False, ** kwargsForRun ):
         sshCommand = self._baseCommand() + [ '--killer', self._killer, self._hexedPickle() ]
         kwargs = dict( self._ownKwargs )
         kwargs.update( kwargsForRun )
