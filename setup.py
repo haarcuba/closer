@@ -5,13 +5,13 @@ README = 'close remote SSH processes automatically'
 requires = [ 'psutil',
              'flask',
              'requests',
-             'pimped_subprocess>=2.1.0', ]
+             'pimped_subprocess>=2.2.0', ]
 tests_require = [
         'pytest',
         ]
 
 setup(name='closer',
-      version='3.2.0',
+      version='3.3.0',
       description=README,
       long_description=README,
       url='https://github.com/haarcuba/closer',
