@@ -79,14 +79,9 @@ class Remote( object ):
         if cleanup:
             Remote._cleanup.append( self )
 
-    def foreground( self, check = True ):
-        sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
-        self._ownKwargs[ 'check' ] = check
-        try:
-            completedProcess = subprocess.run( sshCommand, ** self._ownKwargs )
-            return completedProcess.returncode
-        except subprocess.CalledProcessError as e:
-            raise exceptions.RemoteProcessError( self._remotePopenDetails, e )
+    def foreground( self, check = True, binary = False, timeout = None ):
+        completedProcess = self.run( binary = binary, timeout = timeout, check = check )
+        return completedProcess.returncode
 
     def output( self, binary = False, check = True ):
         process = self.run( binary = binary, check = check, stdout = subprocess.PIPE )
