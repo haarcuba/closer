@@ -84,11 +84,10 @@ class Remote( object ):
 
     def foreground( self, check = True ):
         sshCommand = self._baseCommand() + [ '--killer', self._killer, self._hexedPickle() ]
+        self._ownKwargs[ 'check' ] = check
         try:
-            if check:
-                return subprocess.check_call( sshCommand, ** self._ownKwargs )
-            else:
-                return subprocess.call( sshCommand, ** self._ownKwargs )
+            completedProcess = subprocess.run( sshCommand, ** self._ownKwargs )
+            return completedProcess.returncode
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
 
