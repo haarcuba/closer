@@ -83,8 +83,8 @@ class Remote( object ):
         completedProcess = self.run( binary = binary, timeout = timeout, check = check )
         return completedProcess.returncode
 
-    def output( self, binary = False, check = True ):
-        process = self.run( binary = binary, check = check, stdout = subprocess.PIPE )
+    def output( self, binary = False, check = True, timeout = None ):
+        process = self.run( binary = binary, check = check, timeout = timeout, stdout = subprocess.PIPE )
         return process.stdout
 
     def run( self, binary = False, timeout = None, ** kwargsForRun ):
