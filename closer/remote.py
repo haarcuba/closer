@@ -7,14 +7,10 @@ import atexit
 import pickle
 import pimped_subprocess
 
-PORT_RANGE = 64000, 65500
+from closer import remote_timeout
+from closer import exceptions
 
-class RemoteProcessError( Exception ):
-    def __init__( self, popenDetails, causedBy ):
-        self.popenDetails = popenDetails
-        self.exitCode = causedBy.returncode
-        self.causedBy = causedBy
-        Exception.__init__( self, 'remote process finished with exit code {}: popenDetails={}'.format( self.exitCode, popenDetails ) )
+PORT_RANGE = 64000, 65500
 
 class Remote( object ):
     _cleanup = []
@@ -75,6 +71,7 @@ class Remote( object ):
 
     def setCloserCommand( self, command ):
         self._closer = command
+        return self
 
     def background( self, cleanup = False ):
         sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
@@ -83,27 +80,29 @@ class Remote( object ):
             Remote._cleanup.append( self )
 
     def foreground( self, check = True ):
-        sshCommand = self._baseCommand() + [ '--killer', self._killer, self._hexedPickle() ]
+        sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         self._ownKwargs[ 'check' ] = check
         try:
             completedProcess = subprocess.run( sshCommand, ** self._ownKwargs )
             return completedProcess.returncode
         except subprocess.CalledProcessError as e:
-            raise RemoteProcessError( self._remotePopenDetails, e )
+            raise exceptions.RemoteProcessError( self._remotePopenDetails, e )
 
     def output( self, binary = False, check = True ):
-        self.run( binary = binary, check = check, stdout = subprocess.PIPE )
-        return self._process.stdout
+        process = self.run( binary = binary, check = check, stdout = subprocess.PIPE )
+        return process.stdout
 
-    def run( self, binary = False, ** kwargsForRun ):
-        sshCommand = self._baseCommand() + [ '--killer', self._killer, self._hexedPickle() ]
+    def run( self, binary = False, timeout = None, ** kwargsForRun ):
+        sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         kwargs = dict( self._ownKwargs )
         kwargs.update( kwargsForRun )
         kwargs[ 'universal_newlines' ] = not binary
         try:
-            self._process = subprocess.run( sshCommand, ** kwargs )
+            wrapWithTimeoutEnforcer = remote_timeout.RemoteTimeout( self, timeout, sshCommand, kwargs )
+            self._process = wrapWithTimeoutEnforcer.completedProcess
+            return self._process
         except subprocess.CalledProcessError as e:
-            raise RemoteProcessError( self._remotePopenDetails, e )
+            raise exceptions.RemoteProcessError( self._remotePopenDetails, e )
 
     def liveMonitor( self, onOutput, onProcessEnd = None, cleanup = False ):
         sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]

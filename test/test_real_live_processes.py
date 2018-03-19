@@ -3,6 +3,7 @@ logging.basicConfig( level = logging.INFO )
 import pytest
 import time
 import closer.remote
+import closer.exceptions
 import subprocess
 import random
 
@@ -79,7 +80,7 @@ class TestRealLiveProcesses( object ):
             tested = closer.remote.Remote( USER, IP, "bash -c 'exit 99'", shell = True )
             self.augment( tested, closerCommand )
             tested.output()
-        except closer.remote.RemoteProcessError as e:
+        except closer.exceptions.RemoteProcessError as e:
             assert e.causedBy.returncode == 99
         else:
             pytest.fail( 'expected process failure to raise RemoteProcessError, but it did not' )
@@ -94,6 +95,22 @@ class TestRealLiveProcesses( object ):
         tested.terminate()
         assert not self.processAlive( 'tag={}'.format( tag ), slack = 0 )
         assert not self.processAlive( 'closer' )
+
+    def test_remote_subprocess_killed_after_timeout( self, dockerContainer, closerCommand ):
+        tag = str( random.random() )
+        tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 60; echo tag={}'".format( tag ), shell = True )
+        self.augment( tested, closerCommand )
+        start = time.time()
+        try:
+            ENABLE_IPYTHON_DEBUGGING = open( '/dev/null' )
+            tested.run( timeout = 2, stdin = ENABLE_IPYTHON_DEBUGGING )
+        except closer.exceptions.RemoteProcessTimeout:
+            elapsed = time.time() - start
+            assert 2 < elapsed and elapsed < 4
+            assert not self.processAlive( 'tag={}'.format( tag ) )
+            assert not self.processAlive( 'closer' )
+        else:
+            pytest.fail( 'expected process failure to raise RemoteProcessTimeout, but it did not' )
 
     def test_many_closer_processes_in_parallel( self, dockerContainer, closerCommand ):
         tags = [ str( random.random() ) for _ in range( 10 ) ]
