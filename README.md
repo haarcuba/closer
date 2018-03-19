@@ -154,6 +154,20 @@ Out[8]:
 
 By default `.foreground()` will raise an exception if the process fails. You can disable this behaviour with `.foreground( check = False )`.
 
+## Timeout on Remote Processes
+
+You can impose a timeout on the time it takes the remote process to end
+
+```python
+remote = closer.remote.Remote( 'myUser', 'myHost', [ 'bash', '-c', 'echo hiThere; sleep 10;' ] )
+remote.run( timeout = 3 )
+```
+
+Since we sleep here 10 seconds, the timeout will go off, and `run` will raise an exception:
+
+    RemoteProcessTimeout: runtime exceeded 3 seconds for remote process: {'args': (['bash', '-c', 'echo hiThere; sleep 10;'],), 'kwargs': {}}
+
+
 ## Live Monitoring of Remote Process Output and Death
 
 You can monitor a remote processes' output and death events using the `liveMonitor` method. Try this:
