@@ -17,13 +17,11 @@ class RemoteTimeout:
         self._wait()
 
     def _wait( self ):
-        self._start = time.time()
-        while self._process.poll() is None:
-            if self._timedOut():
-                with contextlib.suppress( Exception ):
-                    self._remote.terminate()
-                raise exceptions.RemoteProcessTimeout( 'runtime exceeded {} seconds for remote process: {}'.format( self._timeout, self._remote ) )
-            time.sleep( 1 )
+        try:
+            self._output, self._error = self._process.communicate( timeout = self._timeout )
+        except subprocess.TimeoutExpired:
+            self._remote.terminate()
+            raise exceptions.RemoteProcessTimeout( 'runtime exceeded {} seconds for remote process: {}'.format( self._timeout, self._remote ) )
 
         self._checkSuccess()
 
@@ -32,23 +30,11 @@ class RemoteTimeout:
             return
         exitCode = self._process.returncode
         if exitCode != 0:
-            raise subprocess.CalledProcessError( exitCode, self._command, output = self._safeRead( self._process.stdout ), stderr = self._safeRead( self._process.stderr ) )
-
-    def _safeRead( self, stream ):
-        if stream is None:
-            return None
-        else:
-            return stream.read()
-
-    def _timedOut( self ):
-        if self._timeout is None:
-            return False
-        now = time.time()
-        return now - self._start > self._timeout
+            raise subprocess.CalledProcessError( exitCode, self._command, output = self._output, stderr = self._error )
 
     @property
     def completedProcess( self ):
         return subprocess.CompletedProcess( self._process.args,
                                             self._process.returncode,
-                                            stdout = self._safeRead( self._process.stdout ),
-                                            stderr = self._safeRead( self._process.stderr ) )
+                                            stdout = self._output,
+                                            stderr = self._error )
