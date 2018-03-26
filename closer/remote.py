@@ -6,8 +6,6 @@ import requests
 import atexit
 import pickle
 import pimped_subprocess
-
-from closer import remote_timeout
 from closer import exceptions
 
 PORT_RANGE = 64000, 65500
@@ -87,17 +85,34 @@ class Remote( object ):
         process = self.run( binary = binary, check = check, timeout = timeout, stdout = subprocess.PIPE )
         return process.stdout
 
-    def run( self, binary = False, timeout = None, ** kwargsForRun ):
+    def run( self, binary = False, timeout = None, check = False, ** kwargsForRun ):
         sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         kwargs = dict( self._ownKwargs )
         kwargs.update( kwargsForRun )
         kwargs[ 'universal_newlines' ] = not binary
         try:
-            wrapWithTimeoutEnforcer = remote_timeout.RemoteTimeout( self, timeout, sshCommand, kwargs )
-            self._process = wrapWithTimeoutEnforcer.completedProcess
-            return self._process
+            return self._run( sshCommand, timeout, check, kwargs )
+        except subprocess.TimeoutExpired:
+            self.terminate()
+            raise exceptions.RemoteProcessTimeout( 'runtime exceeded {} seconds for remote process: {}'.format( timeout, self ) )
         except subprocess.CalledProcessError as e:
             raise exceptions.RemoteProcessError( self._remotePopenDetails, e )
+
+    def _run( self, sshCommand, timeout, check, kwargs ):
+        self._process = subprocess.Popen( sshCommand, ** kwargs )
+        output, error = self._process.communicate( timeout = timeout )
+        if check:
+            if self._process.returncode != 0:
+                raise subprocess.CalledProcessError( self._process.returncode,
+                                                        sshCommand,
+                                                        output = output,
+                                                        stderr = error )
+
+        self._process = subprocess.CompletedProcess( self._process.args,
+                                            self._process.returncode,
+                                            stdout = output,
+                                            stderr = error )
+        return self._process
 
     def liveMonitor( self, onOutput, onProcessEnd = None, cleanup = False ):
         sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
