@@ -14,6 +14,10 @@ Here are the main features:
 * live monitoring of remote process output
 * get a callback upon remote process' death
 
+## License
+
+Do whatever you want with closer, but be kind enough to share your improvements with a pull request.
+
 ## Installation
 
 You *must* install `closer` *both* on your local machine *and* the remote machine:
