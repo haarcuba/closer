@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-README = 'close remote SSH processes automatically'
+README = 'monitor and close remote SSH processes automatically'
 
 requires = [ 'psutil',
              'flask',
@@ -14,9 +14,10 @@ setup(name='closer',
       version='4.0.4',
       description=README,
       long_description=README,
-      url='https://github.com/haarcuba/closer',
+      url='https://haarcuba.github.io/closer',
       classifiers=[
           "Programming Language :: Python",
+          "Operating System :: POSIX :: Linux",
       ],
       author='Yoav Kleinberger',
       author_email='haarcuba@gmail.com',
