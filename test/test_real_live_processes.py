@@ -4,6 +4,7 @@ import pytest
 import time
 import closer.remote
 import closer.exceptions
+import concurrent.futures
 import subprocess
 import random
 
@@ -33,6 +34,7 @@ class TestRealLiveProcesses( object ):
     def dockerContainer( self ):
         docker = subprocess.run( [ 'docker', 'run', '-d', '--network', 'host', 'haarcuba/for_closer', str( TEST_SSH_PORT ) ], stdout = subprocess.PIPE, universal_newlines = True, check = True )
         container = docker.stdout.strip()
+        subprocess.run( [ 'docker', 'cp', 'closer/closer3.py', '{}:/usr/local/lib/python3.5/dist-packages/closer/closer3.py'.format( container ) ], check = True )
         yield container
         subprocess.run( [ 'docker', 'rm', '-f', container ] )
 
@@ -57,6 +59,32 @@ class TestRealLiveProcesses( object ):
         self.augment( tested, closerCommand )
         output = tested.output( binary = True )
         assert b'localhost' in output
+
+    @pytest.fixture
+    def port( self ):
+        PORT = 64000
+        original = closer.remote.random.randint
+        closer.remote.random.randint = lambda x,y: PORT
+        yield PORT
+        closer.remote.random.randint = original
+
+    def test_issue_3_try_more_than_one_remote_port( self, dockerContainer, closerCommand, port ):
+        first = closer.remote.Remote( USER, IP, "bash -c 'echo -n first'; sleep 200", shell = True )
+        second = closer.remote.Remote( USER, IP, "bash -c 'echo second'; sleep 200", shell = True )
+        self.augment( first, closerCommand )
+        self.augment( second, closerCommand )
+
+        first.background()
+        CAPTURE_THE_PORT = 1
+        time.sleep( CAPTURE_THE_PORT )
+        second.background()
+
+        assert self.processAlive( 'first' )
+        assert self.processAlive( 'second' )
+        first.terminate()
+        second.terminate()
+        assert not self.processAlive( 'first' )
+        assert not self.processAlive( 'second' )
 
     def test_capture_output_and_also_return_code( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
