@@ -32,7 +32,7 @@ class TestRealLiveProcesses( object ):
 
     @pytest.fixture( scope = 'session' )
     def dockerContainer( self ):
-        docker = subprocess.run( [ 'docker', 'run', '-d', '--network', 'host', 'haarcuba/for_closer', str( TEST_SSH_PORT ) ], stdout = subprocess.PIPE, universal_newlines = True, check = True )
+        docker = subprocess.run( [ 'docker', 'run', '-d', '--name', 'cont', '--network', 'host', 'haarcuba/for_closer', str( TEST_SSH_PORT ) ], stdout = subprocess.PIPE, universal_newlines = True, check = True )
         container = docker.stdout.strip()
         subprocess.run( [ 'docker', 'cp', 'closer/closer3.py', '{}:/usr/local/lib/python3.5/dist-packages/closer/closer3.py'.format( container ) ], check = True )
         yield container
@@ -69,7 +69,7 @@ class TestRealLiveProcesses( object ):
         closer.remote.random.randint = original
 
     def test_issue_3_try_more_than_one_remote_port( self, dockerContainer, closerCommand, port ):
-        first = closer.remote.Remote( USER, IP, "bash -c 'echo -n first'; sleep 200", shell = True )
+        first = closer.remote.Remote( USER, IP, "bash -c 'echo first'; sleep 200", shell = True )
         second = closer.remote.Remote( USER, IP, "bash -c 'echo second'; sleep 200", shell = True )
         self.augment( first, closerCommand )
         self.augment( second, closerCommand )

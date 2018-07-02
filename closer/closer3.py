@@ -20,7 +20,22 @@ def killAll( * args ):
         killMethod = getattr( process, killer )
         killMethod()
 
-def quitWhenToldServer( port ):
+def spreadAround( middle, delta ):
+    yield middle
+    for i in range( 1, delta + 1 ):
+        yield middle + i
+        yield middle - i
+
+def _launchWebApp( webApp, host, port ):
+    for port_ in spreadAround( port, 10 ):
+        try:
+            return webApp.run( host = '0.0.0.0', port = port_ )
+        except OSError as e:
+            PORT_TAKEN = 98
+            if e.errno != PORT_TAKEN:
+                raise
+
+def quitWhenToldServer( port, uuid ):
     webApp = flask.Flask( 'closer' )
 
     @webApp.route("/kill")
@@ -32,11 +47,15 @@ def quitWhenToldServer( port ):
         shutdownFlask()
         return 'bye'
 
+    @webApp.route("/ping")
+    def ping():
+        return uuid
+
     IMPOSSIBLE_LEVEL = 500
     log = logging.getLogger('werkzeug')
     log.setLevel( IMPOSSIBLE_LEVEL )
     webApp.logger.setLevel( IMPOSSIBLE_LEVEL )
-    webApp.run( host = '0.0.0.0', port = port )
+    _launchWebApp( webApp, '0.0.0.0', port )
 
 def interpret( hexedPickle ):
     pickled = codecs.decode( hexedPickle, 'hex' )
@@ -62,7 +81,7 @@ def main():
     subProcess = subprocess.Popen( * popenDetails[ 'args' ], ** popenDetails[ 'kwargs' ] )
     signal.signal( signal.SIGTERM, killAll )
     if arguments.quitWhenTold:
-        thread = threading.Thread( target = quitWhenToldServer, args = ( details[ 'port' ], ) )
+        thread = threading.Thread( target = quitWhenToldServer, args = ( details[ 'port' ], details[ 'uuid' ] ) )
         thread.daemon = True
         thread.start()
         exitCode = subProcess.wait()
