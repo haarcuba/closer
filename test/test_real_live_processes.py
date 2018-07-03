@@ -68,11 +68,11 @@ class TestRealLiveProcesses( object ):
         yield PORT
         closer.remote.random.randint = original
 
-    def test_issue_3_try_more_than_one_remote_port( self, dockerContainer, closerCommand, port ):
+    def test_issue_3_try_more_than_one_remote_port( self, dockerContainer, port ):
         first = closer.remote.Remote( USER, IP, "bash -c 'echo first'; sleep 200", shell = True )
         second = closer.remote.Remote( USER, IP, "bash -c 'echo second'; sleep 200", shell = True )
-        self.augment( first, closerCommand )
-        self.augment( second, closerCommand )
+        self.augment( first, 'closer3' )
+        self.augment( second, 'closer3' )
 
         first.background()
         CAPTURE_THE_PORT = 1
