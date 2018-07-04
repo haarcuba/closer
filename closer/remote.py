@@ -1,6 +1,5 @@
 import subprocess
 import uuid
-import time
 import codecs
 import logging
 import random
@@ -9,7 +8,7 @@ import atexit
 import pickle
 import pimped_subprocess
 from closer import exceptions
-from closer import closer3
+from closer import find_remote_control_port
 
 PORT_RANGE = 64000, 65500
 
@@ -35,6 +34,22 @@ class Remote( object ):
         self._sshPort = 22
         self._sshOptions = ''
         self._uuid = str( uuid.uuid4() )
+
+    @property
+    def host( self ):
+        return self._host
+
+    @property
+    def uuid( self ):
+        return self._uuid
+
+    @property
+    def controlPort( self ):
+        return self._port
+
+    @controlPort.setter
+    def controlPort( self, port ):
+        self._port = port
 
     @property
     def sshPort( self ):
@@ -78,27 +93,9 @@ class Remote( object ):
     def background( self, cleanup = False ):
         sshCommand = self._baseCommand() + [ '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         self._process = subprocess.Popen( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
-        self._ping()
+        find_remote_control_port.FindRemoteControlPort( self )
         if cleanup:
             Remote._cleanup.append( self )
-
-    def _ping( self ):
-        SLACK_FOR_FLASK_TO_START = 2
-        time.sleep( SLACK_FOR_FLASK_TO_START )
-        for port in closer3.spreadAround( self._port, 10 ):
-            url = 'http://{}:{}/ping'.format( self._host, port )
-            try:
-                response = requests.get( url )
-                if response.status_code == 200 and response.text == self._uuid:
-                    logging.info( 'remote closer listening on {}:{}'.format( self._host, port ) )
-                    self._port = port
-                    return
-            except requests.exceptions.RequestException as e:
-                logging.info( 'while pinging {}'.format( e ) )
-
-            time.sleep( 1 )
-
-        logging.error( 'remote closer not found' )
 
     def foreground( self, check = True, binary = False, timeout = None ):
         completedProcess = self.run( binary = binary, timeout = timeout, check = check )

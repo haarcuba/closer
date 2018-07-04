@@ -61,14 +61,14 @@ class TestRealLiveProcesses( object ):
         assert b'localhost' in output
 
     @pytest.fixture
-    def port( self ):
+    def forceSamePortForAll( self ):
         PORT = 64000
         original = closer.remote.random.randint
         closer.remote.random.randint = lambda x,y: PORT
         yield PORT
         closer.remote.random.randint = original
 
-    def test_issue_3_try_more_than_one_remote_port( self, dockerContainer, port ):
+    def test_issue_3_try_more_than_one_remote_port( self, dockerContainer, forceSamePortForAll ):
         first = closer.remote.Remote( USER, IP, "bash -c 'echo first'; sleep 200", shell = True )
         second = closer.remote.Remote( USER, IP, "bash -c 'echo second'; sleep 200", shell = True )
         self.augment( first, 'closer3' )
@@ -78,6 +78,9 @@ class TestRealLiveProcesses( object ):
         CAPTURE_THE_PORT = 1
         time.sleep( CAPTURE_THE_PORT )
         second.background()
+
+        SLACK_FOR_FINDING_THE_SECOND_PROCESS_CONTROL_PORT = 2
+        time.sleep( SLACK_FOR_FINDING_THE_SECOND_PROCESS_CONTROL_PORT )
 
         assert self.processAlive( 'first' )
         assert self.processAlive( 'second' )
