@@ -34,7 +34,7 @@ class TestRealLiveProcesses( object ):
     def dockerContainer( self ):
         docker = subprocess.run( [ 'docker', 'run', '-d', '--name', 'cont', '--network', 'host', 'haarcuba/for_closer', str( TEST_SSH_PORT ) ], stdout = subprocess.PIPE, universal_newlines = True, check = True )
         container = docker.stdout.strip()
-        subprocess.run( [ 'docker', 'cp', 'closer/closer3.py', '{}:/usr/local/lib/python3.5/dist-packages/closer/closer3.py'.format( container ) ], check = True )
+        subprocess.run( [ 'docker', 'cp', 'source/closer/closer3.py', f'{container}:/usr/local/lib/python3.5/dist-packages/closer/closer3.py' ], check = True )
         yield container
         subprocess.run( [ 'docker', 'rm', '-f', container ] )
 
@@ -50,10 +50,10 @@ class TestRealLiveProcesses( object ):
         assert exitCode == 77
 
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{}'".format( tag, tag, tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'echo -n {tag}-{tag}-{tag}'", shell = True )
         self.augment( tested, closerCommand )
         output = tested.output()
-        assert output == '{}-{}-{}'.format( tag, tag, tag )
+        assert output == f'{tag}-{tag}-{tag}'
 
         tested = closer.remote.Remote( USER, IP, 'head -1 /etc/hosts' , shell = True )
         self.augment( tested, closerCommand )
@@ -91,19 +91,19 @@ class TestRealLiveProcesses( object ):
 
     def test_capture_output_and_also_return_code( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {}-{}-{} ; exit 88'".format( tag, tag, tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'echo -n {tag}-{tag}-{tag} ; exit 88'", shell = True )
         self.augment( tested, closerCommand )
         output = tested.output( check = False )
-        assert output == '{}-{}-{}'.format( tag, tag, tag )
+        assert output == f'{tag}-{tag}-{tag}'
         assert tested.process.returncode == 88
 
     def test_capture_output_and_error_and_exit_code( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'echo -n {tag}-{tag}-{tag} ; echo -n {tag}_error > /dev/stderr ; exit 11'".format( tag = tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'echo -n {tag}-{tag}-{tag} ; echo -n {tag}_error > /dev/stderr ; exit 11'", shell = True )
         self.augment( tested, closerCommand )
         tested.run( check = False, stdout = subprocess.PIPE, stderr = subprocess.PIPE )
-        assert tested.process.stdout == '{}-{}-{}'.format( tag, tag, tag )
-        assert tested.process.stderr == '{}_error'.format( tag )
+        assert tested.process.stdout == f'{tag}-{tag}-{tag}'
+        assert tested.process.stderr == f'{tag}_error'
         assert tested.process.returncode == 11
 
     def test_capture_output_raises_on_error_by_default( self, dockerContainer, closerCommand ):
@@ -118,18 +118,18 @@ class TestRealLiveProcesses( object ):
 
     def test_remote_subprocess_dies_when_closer_told_to_quit( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'sleep 1000; echo tag={tag}'", shell = True )
         self.augment( tested, closerCommand )
         tested.background( cleanup = False )
         assert self.processAlive( 'closer' )
-        assert self.processAlive( 'tag={}'.format( tag ), slack = 0 )
+        assert self.processAlive( f'tag={tag}', slack = 0 )
         tested.terminate()
-        assert not self.processAlive( 'tag={}'.format( tag ), slack = 0 )
+        assert not self.processAlive( f'tag={tag}', slack = 0 )
         assert not self.processAlive( 'closer' )
 
     def test_remote_subprocess_killed_after_timeout( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 60; echo tag={}'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'sleep 60; echo tag={tag}'", shell = True )
         self.augment( tested, closerCommand )
         start = time.time()
         try:
@@ -138,7 +138,7 @@ class TestRealLiveProcesses( object ):
         except closer.exceptions.RemoteProcessTimeout:
             elapsed = time.time() - start
             assert 2 < elapsed and elapsed < 4
-            assert not self.processAlive( 'tag={}'.format( tag ) )
+            assert not self.processAlive( f'tag={tag}' )
             assert not self.processAlive( 'closer' )
         else:
             pytest.fail( 'expected process failure to raise RemoteProcessTimeout, but it did not' )
@@ -147,36 +147,36 @@ class TestRealLiveProcesses( object ):
         tags = [ str( random.random() ) for _ in range( 10 ) ]
         remotes = {}
         for tag in tags:
-            remote = closer.remote.Remote( USER, IP, "bash -c 'sleep 1000; echo tag={}'".format( tag ), shell = True )
+            remote = closer.remote.Remote( USER, IP, f"bash -c 'sleep 1000; echo tag={tag}'", shell = True )
             self.augment( remote, closerCommand )
             remote.sshPort = TEST_SSH_PORT
             remote.background( cleanup = False )
             remotes[ tag ] = remote
-            assert self.processAlive( 'tag={}'.format( tag ) )
+            assert self.processAlive( f'tag={tag}' )
 
         for tag in tags:
             remote = remotes[ tag ]
             remote.terminate()
-            assert not self.processAlive( 'tag={}'.format( tag ) )
+            assert not self.processAlive( f'tag={tag}' )
 
         assert not self.processAlive( 'closer' )
 
     def test_closer_process_dies_if_remote_subprocess_dies_does_not_raise_if_terminated_after_death( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'sleep 3; echo tag={}'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'sleep 3; echo tag={tag}'", shell = True )
         self.augment( tested, closerCommand )
         tested.background( cleanup = False )
         assert self.processAlive( 'closer' )
-        assert self.processAlive( 'tag={}'.format( tag ) )
+        assert self.processAlive( f'tag={tag}' )
         LET_PROCESS_DIE_NATURALLY = 2
         time.sleep( LET_PROCESS_DIE_NATURALLY )
-        assert not self.processAlive( 'tag={}'.format( tag ) )
+        assert not self.processAlive( f'tag={tag}' )
         assert not self.processAlive( 'closer' )
         tested.terminate()
 
     def test_live_monitoring_of_remote_process( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'for i in 1 2 3 4 5; do echo {tag}_$i; sleep 1; done'", shell = True )
         self.augment( tested, closerCommand )
         monitor = Monitor()
         assert not monitor.deathNotification
@@ -187,13 +187,13 @@ class TestRealLiveProcesses( object ):
         time.sleep( LET_PROCESS_DIE_NATURALLY )
         assert not self.processAlive( tag )
         assert not self.processAlive( 'closer' )
-        assert monitor.output == [ '{}_{}'.format( tag, i ) for i in ( 1, 2, 3, 4, 5 ) ]
+        assert monitor.output == [ f'{tag}_{i}' for i in ( 1, 2, 3, 4, 5 ) ]
         assert monitor.exitCode == 0
         assert monitor.deathNotification
 
     def test_live_monitoring_and_deliberate_killing_of_remote_process( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {tag}_$i; sleep 1; done'", shell = True )
         self.augment( tested, closerCommand )
         monitor = Monitor()
         tested.liveMonitor( onOutput = monitor.onOutput, onProcessEnd = monitor.onDeath, cleanup = True )
@@ -209,13 +209,13 @@ class TestRealLiveProcesses( object ):
         assert not self.processAlive( 'closer' )
         assert len( monitor.output ) > 0
         for index, line in enumerate( monitor.output ):
-            assert line == '{}_{}'.format( tag, index + 1 )
+            assert line == f'{tag}_{index + 1}'
         assert monitor.exitCode != 0
         assert monitor.deathNotification
 
     def test_live_monitoring_only_output( self, dockerContainer, closerCommand ):
         tag = str( random.random() )
-        tested = closer.remote.Remote( USER, IP, "bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {}_$i; sleep 1; done'".format( tag ), shell = True )
+        tested = closer.remote.Remote( USER, IP, f"bash -c 'for i in 1 2 3 4 5 6 7 8 9 10; do echo {tag}_$i; sleep 1; done'", shell = True )
         self.augment( tested, closerCommand )
         monitor = Monitor()
         tested.liveMonitor( onOutput = monitor.onOutput, cleanup = True )
@@ -231,12 +231,12 @@ class TestRealLiveProcesses( object ):
         assert not self.processAlive( 'closer' )
         assert len( monitor.output ) > 0
         for index, line in enumerate( monitor.output ):
-            assert line == '{}_{}'.format( tag, index + 1 )
+            assert line == f'{tag}_{index + 1}'
         assert monitor.exitCode is None
         assert not monitor.deathNotification
 
     def processAlive( self, searchString, slack = 1 ):
         time.sleep( slack )
         searchString = str( searchString )
-        completedProcess = subprocess.run( "ssh -p {} -o StrictHostKeyChecking=no {}@{} pgrep -fl '{}'".format( TEST_SSH_PORT, USER, IP, searchString ), shell = True )
+        completedProcess = subprocess.run( f"ssh -p {TEST_SSH_PORT} -o StrictHostKeyChecking=no {USER}@{IP} pgrep -fl '{searchString}'", shell = True )
         return completedProcess.returncode == 0
