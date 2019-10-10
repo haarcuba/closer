@@ -31,10 +31,10 @@ You *must* install `closer` *both* on your local machine *and* the remote machin
 
 ## Example Run
 
-In this example we connect via SSH to a machien with IP `10.50.50.11` with a user called `vagrant`.
+In this example we connect via SSH to a machine with IP `10.50.50.11` with a user called `vagrant`.
 We run a `bash` shell that itself runs a `sleep`, not before echoing `whatup` to standard output.
 
-After we quit the [`IPython`](http://ipython.org) process, the `Remote` object kills the remote process for us (becasue we specified `cleanup=True`.
+After we quit the [`IPython`](http://ipython.org) process, the `Remote` object kills the remote process for us (because we specified `cleanup=True`.
 
 ```python
 $ ipython
@@ -89,7 +89,7 @@ signal.signal( signal.SIGTERM, handleSIGTERM )
 
 ## My Remote Machine's `closer` Script is Not in the System PATH
 
-use the `.setCloserCommand()`, e.g.
+Use the `.setCloserCommand()`, e.g.
 
 ```python
 remoteObject = closer.remote.Remote( ... )
@@ -98,7 +98,7 @@ remoteObject.setCloserCommand( '/path/to/closer' )
 
 ## I want to specify a different SSH port or other options
 
-here you go:
+Here you go:
 
 ```python
 remoteObject.sshPort = SOME_OTHER_PORT
@@ -189,7 +189,7 @@ LET_PROCESS_DIE_NATURALLY = 12
 time.sleep( LET_PROCESS_DIE_NATURALLY )
 ```
 
-the `onOutput` callback will be called for every line the remote process
+The `onOutput` callback will be called for every line the remote process
 produces on its standard output, and the `onProcessEnd` will be called when the
 remote process exits.
 
@@ -205,6 +205,6 @@ remote process exits.
 remoteObject.setCloserCommand( '/path/to/closer' ) 
 ```
     
-otherwise, it will look for a local `closer3` script and will not find one.
+Otherwise, it will look for a local `closer3` script and will not find one.
 
 **PYTHON 2 SUPPORT WILL BE DROPPED EVENTUALLY**
